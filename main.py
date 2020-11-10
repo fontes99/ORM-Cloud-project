@@ -8,24 +8,24 @@ client2 = Client('us-east-2')
 client2.cleanUp()
 
 
-# Make instance in us-east-1
+# =========  Make instance in us-east-1 =================
 print(HEADER+'\n[us-east-1] '+ENDC+'Setting up machines'+ENDC)
-key = 'boto3-key'
-client.makeKeyPair(key)
 
-security_group = 'ssh-enable'
-client.createSecurityGrp(security_group, 'enable ssh', [22])
+#-------------- Django ----------------
+client.makeKeyPair('DJkey')
+client.createSecurityGrp('ssh-enable', 'enable ssh', [22])
+client.launchInstance('Django', open('configDJ.sh').read(), key='DJkey', secGr='ssh-enable')
 
-client.launchInstance('boto3-1', open('configDB.sh').read(), key=key, secGr=security_group)
+# ------------ Webserver ---------------
+client.makeKeyPair('Webserver')
+client.createSecurityGrp('webserver-8080', 'enable ssh', [22, 8080, 80])
+client.launchInstance('Webserver', open('configApp.sh').read(), key='Webserver', secGr='webserver-8080')
 
 
-# Make instance in us-east-2
+# =========  Make instance in us-east-2 =================
 print(HEADER+'\n[us-east-2] '+ENDC+'Setting up machines'+ENDC)
 
-key2 = 'boto3-key2'
-client2.makeKeyPair(key2)
-
-security_group2 = 'ssh-enable'
-client2.createSecurityGrp(security_group2, 'enable ssh', [22])
-
-client2.launchInstance('boto3-2', open('configDJ.sh').read(), key=key2, secGr=security_group2)
+# ------------ postgres DB ---------------
+client2.makeKeyPair('postgresDB')
+client2.createSecurityGrp('ssh-enable', 'enable ssh', [22])
+client2.launchInstance('postgresDB', open('configDB.sh').read(), key='postgresDB', secGr='ssh-enable')

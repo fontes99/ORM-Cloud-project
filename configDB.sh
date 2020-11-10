@@ -6,4 +6,4 @@ cd DataBase
 touch foi.py
 
 sudo apt update && sudo apt upgrade
-sudo apt install cmatrix
+sudo apt install postgresql postgresql-contrib -y

@@ -31,6 +31,10 @@ class Client:
 
         self.client = boto3.client('ec2', config=self.my_config)
 
+        self.loadbalancer = boto3.client('elb', config=self.my_config)
+
+        self.autoscaling = boto3.client('autoscaling', config=self.my_config)
+
 
     def createSecurityGrp(self, name:str, description:str, permissions:list):
         """Create Security Group and add permissions
@@ -127,7 +131,7 @@ class Client:
         :name: name of key pair
         """
 
-        filename = name + '.pem'
+        filename = 'keys/'+name+'.pem'
 
         response = self.client.describe_key_pairs(Filters=[
             {
