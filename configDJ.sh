@@ -1,9 +1,14 @@
 #!/bin/bash
 
 cd /home/ubuntu
-mkdir Django
-cd Django
-touch foi.py
 
 sudo apt update && sudo apt upgrade
-sudo apt install cmatrix
+
+git clone https://github.com/raulikeda/tasks.git
+
+sed -i 's/node1/ipzao/g' tasks/portfolio/settings.py
+
+cd tasks/
+sh ./install
+
+sudo reboot

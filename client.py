@@ -17,6 +17,10 @@ class Client:
         - criar AIM da DJ e destruir
         - loadbalancer + autoscaling
 
+    ajuda:
+        - subnet no DB??
+        - testar tudo
+
     '''
 
     def __init__(self, region:str):
@@ -86,13 +90,11 @@ class Client:
             #pass
 
 
-    def launchInstance(self, name:str, cmd:str, InsType='t2.micro', minC=1, maxC=1, key='Fontes', secGr='default', ):
+    def launchInstance(self, name:str, cmd:str, InsType='t2.micro', key='Fontes', secGr='default', ):
         """Launches Images in AWS EC2
 
         :InsType: type of instance (t2.micro)
         :imgID: Image for booting instance (ami-0817d428a6fb68645) <- this is the AMI for Ubuntu 18.04.5 LTS
-        :minC: Minimum of instances to create (1)
-        :maxC: Maximum of instances to create (1)
         :key: Key pair for SSH access (None)
         :secGr: Security Group Name to associate with Instance
 
@@ -102,10 +104,13 @@ class Client:
             response = client.launchInstance()
         """
 
+        response = self.client.allocate_address()
+        floating_ip = response['PublicIp']
+
         response = self.client.run_instances(ImageId=self.img,
                                                 InstanceType=InsType,
-                                                MinCount=minC,
-                                                MaxCount=maxC,
+                                                MinCount=1,
+                                                MaxCount=1,
                                                 KeyName=key,
                                                 SecurityGroups=[secGr],
                                                 UserData=cmd,
@@ -124,8 +129,23 @@ class Client:
                                                 }]
                                             )
 
-        for instance in response['Instances']:
-            print(OKGREEN+f'Instance {name} ({instance["InstanceId"]}) created'+ENDC)
+        instance_id = response['Instances'][0]["InstanceId"]
+
+        print(OKCYAN +f'Booting instance {name} ...'+ ENDC)
+
+        # Waiter
+        waiter = self.client.get_waiter('instance_running')
+        waiter.wait(InstanceIds=[instance_id])
+
+        response = self.client.associate_address(
+                    InstanceId=instance_id,
+                    PublicIp=floating_ip,
+                )
+
+        print(OKGREEN+f'Instance {name} ({instance_id}) created with PublicIP: {floating_ip}'+ENDC)
+
+        return floating_ip
+
 
 
     def makeKeyPair(self, name:str):
@@ -164,6 +184,7 @@ class Client:
         """
 
         instances_ids = []
+        instances_ips = []
 
         response = self.client.describe_instances(
             Filters=[
@@ -173,14 +194,56 @@ class Client:
                         'PFontes',
                     ]
                 },
+                {
+                    'Name': 'instance-state-name',
+                    'Values': [
+                        'running',
+                    ]
+                },
             ])
 
-        for i in range(len(response['Reservations'])):
-            instances_ids.append(response['Reservations'][i]['Instances'][0]['InstanceId'])
+        if response['Reservations']:
 
-        print(HEADER+UNDERLINE+'Cleaning Up'+ENDC)
-        for j in instances_ids:
-            print(f'Terminating instance {j}')
-            response = self.client.terminate_instances(
-                InstanceIds=[j])
+            for i in response['Reservations']:
+                instances_ids.append(i['Instances'][0]['InstanceId'])
+                instances_ips.append(i['Instances'][0]['PublicIpAddress'])
+
+            print(HEADER+'Cleaning Up'+ENDC)
+
+            for ip in instances_ips:   
+
+                response = self.client.describe_addresses(
+                    PublicIps=[ip]
+                )
+
+                allocation_id = response['Addresses'][0]['AllocationId']   
+
+                response = self.client.release_address(
+                    AllocationId=allocation_id,
+                )
+
+            for id in instances_ids:
+                print(f'Terminating instance {id}')
+                response = self.client.terminate_instances(
+                    InstanceIds=[id])
+
+
+    def create_AIM_and_destroy(self, instance_name:str):
+        """Creates an AIM of an instance and Terminates it
+        :instance_name: name of instance to create the AIM and terminate
+        """
+
+        response = self.client.describe_instances(
+            Filters=[
+                {
+                    'Name': 'tag:Name',
+                    'Values': [
+                        instance_name,
+                    ]
+                },
+            ])
+
+        
+        instance_id = response['Reservations'][0]['Instances'][0]['InstanceId']
+
 
