@@ -12,8 +12,10 @@ class Client:
 
     TO-DO
         implementar
-        - deletar instancias existentes
-        - enviar comandos (UserData em run_instances - roda em /)
+        - instalar DB
+        - instalar DJ e apontar para DB
+        - criar AIM da DJ e destruir
+        - loadbalancer + autoscaling
 
     '''
 
@@ -42,13 +44,13 @@ class Client:
         :name: str with name of security group
         :description: str with small description of secutiry group
         :permissions: list of ports to add in the security group
-        
+
         example of usage:
             createSecurityGrp(client, 'mySecurityGroup', 'A Security Group that I created using boto3', [22, 80, 8080])
         """
 
         try:
-        
+
             response = self.client.describe_security_groups(
                 Filters=[
                     {
@@ -99,11 +101,11 @@ class Client:
         example of usage:
             response = client.launchInstance()
         """
-        
-        response = self.client.run_instances(ImageId=self.img, 
-                                                InstanceType=InsType, 
-                                                MinCount=minC, 
-                                                MaxCount=maxC, 
+
+        response = self.client.run_instances(ImageId=self.img,
+                                                InstanceType=InsType,
+                                                MinCount=minC,
+                                                MaxCount=maxC,
                                                 KeyName=key,
                                                 SecurityGroups=[secGr],
                                                 UserData=cmd,
@@ -160,7 +162,7 @@ class Client:
     def cleanUp(self):
         """ Terminates all instances created by this code
         """
-        
+
         instances_ids = []
 
         response = self.client.describe_instances(
@@ -175,7 +177,7 @@ class Client:
 
         for i in range(len(response['Reservations'])):
             instances_ids.append(response['Reservations'][i]['Instances'][0]['InstanceId'])
-        
+
         print(HEADER+UNDERLINE+'Cleaning Up'+ENDC)
         for j in instances_ids:
             print(f'Terminating instance {j}')
