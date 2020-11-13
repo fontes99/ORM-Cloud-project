@@ -85,7 +85,7 @@ class Client:
             #pass
 
 
-    def launchInstance(self, name:str, cmd:str, InsType='t2.micro', key='Fontes', secGr='default', ):
+    def launchInstance(self, name:str, cmd:str, InsType='t2.micro', key='Fontes', secGr='default'):
         """Launches Images in AWS EC2
 
         :InsType: type of instance (t2.micro)
@@ -242,7 +242,8 @@ class Client:
         )
 
         if response['Images']:
-            response_deregister_image = self.client.deregister_image(
+            print(FAIL+'Deregistering'+ENDC+f' existent image named {img_name}') 
+            self.client.deregister_image(
                 ImageId=response['Images'][0]['ImageId'],
             )
 
@@ -265,6 +266,7 @@ class Client:
         
         instance_id = response['Reservations'][0]['Instances'][0]['InstanceId']
 
+        print(f'Creating AIM of instance {instance_name} ({instance_id})')
         response = self.client.create_image(
             InstanceId=instance_id,
             Name=img_name
@@ -272,6 +274,7 @@ class Client:
 
         image_id = response['ImageId']
 
+        # print(f'Terminating instance {instance_name} ({instance_id})')           
         # response = self.client.terminate_instances(
         #     InstanceIds=[id]
         # )
