@@ -20,14 +20,14 @@ DB_ip = client2.launchInstance('postgresDB', open('configDB.sh').read(), key='po
 # =========  Make instance in us-east-1 =================
 print(HEADER+'\n[us-east-1] '+ENDC+'Setting up machines'+ENDC)
 
-# # ------------ Webserver ---------------
-print(HEADER+UNDERLINE+'\n-Setting up Webserver-\n'+ENDC)
-client.makeKeyPair('Webserver')
-client.createSecurityGrp('webserver-8080', 'enable ssh', [22, 8080, 80])
-Webserver_ip = client.launchInstance('Webserver', open('configApp.sh').read(), key='Webserver', secGr='webserver-8080')
-
 #-------------- Django ----------------
 print(HEADER+UNDERLINE+'\n-Setting up Django-\n'+ENDC)
 client.makeKeyPair('DJkey')
 client.createSecurityGrp('ssh-enable', 'enable ssh', [22, 8080, 80])
 DJ_ip = client.launchInstance('Django', open('configDJ.sh').read().replace('ipzao', DB_ip), key='DJkey', secGr='ssh-enable')
+
+# # ------------ Webserver ---------------
+print(HEADER+UNDERLINE+'\n-Setting up Webserver-\n'+ENDC)
+client.makeKeyPair('Webserver')
+client.createSecurityGrp('webserver-8080', 'enable ssh', [22, 8080, 80])
+Webserver_ip = client.launchInstance('Webserver', open('configApp.sh').read(), key='Webserver', secGr='webserver-8080')

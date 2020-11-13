@@ -1,4 +1,5 @@
 # Key Pair AWS
+keys/*
 *.pem
 
 # VS code
