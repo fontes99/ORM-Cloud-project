@@ -12,14 +12,9 @@ class Client:
 
     TO-DO
         implementar
-        - instalar DB
-        - instalar DJ e apontar para DB
         - criar AIM da DJ e destruir
-        - loadbalancer + autoscaling
-
-    ajuda:
-        - subnet no DB??
-        - testar tudo
+        - loadbalancer
+        - autoscaling
 
     '''
 
@@ -233,17 +228,54 @@ class Client:
         :instance_name: name of instance to create the AIM and terminate
         """
 
+        img_name = instance_name +'_img'
+
+        response = self.client.describe_images(
+            Filters=[
+                {
+                    'Name': 'name',
+                    'Values': [
+                        img_name,
+                    ]
+                },
+            ]
+        )
+
+        if response['Images']:
+            response_deregister_image = self.client.deregister_image(
+                ImageId=response['Images'][0]['ImageId'],
+            )
+
         response = self.client.describe_instances(
             Filters=[
                 {
                     'Name': 'tag:Name',
                     'Values': [
-                        instance_name,
+                        instance_name
                     ]
                 },
+                {
+                    'Name': 'instance-state-name',
+                    'Values': [
+                        'running',
+                    ]
+                }
             ])
 
         
         instance_id = response['Reservations'][0]['Instances'][0]['InstanceId']
+
+        response = self.client.create_image(
+            InstanceId=instance_id,
+            Name=img_name
+        )
+
+        image_id = response['ImageId']
+
+        # response = self.client.terminate_instances(
+        #     InstanceIds=[id]
+        # )
+
+        return image_id
 
 
