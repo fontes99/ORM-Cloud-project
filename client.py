@@ -3,7 +3,9 @@ from botocore.exceptions import ClientError
 from botocore.config import Config
 import os
 import subprocess as sp
-from misc import *
+from misc import Color
+
+c = Color()
 
 
 class Client:
@@ -60,13 +62,13 @@ class Client:
 
             if response['SecurityGroups']:
                 response = self.client.delete_security_group(GroupName=name)
-                print(f'Existent and unused '+OKGREEN+'Security Group '+ENDC+f'with same name {name} '+WARNING+'deleted'+ENDC)
+                print(f'Existent and unused '+c.OKGREEN+'Security Group '+c.ENDC+f'with same name {name} '+c.WARNING+'deleted'+c.ENDC)
 
             response = self.client.create_security_group(GroupName=name,
                                                     Description=description)
 
             security_group_id = response['GroupId']
-            print(OKGREEN+'Security Group '+ENDC+f'{name} Created: {security_group_id}')
+            print(c.OKGREEN+'Security Group '+c.ENDC+f'{name} Created: {security_group_id}')
 
             permList = []
 
@@ -80,9 +82,21 @@ class Client:
 
             print(f'Ingress Successfully Set on ports {permissions} (HTTPStatusCode: {data["ResponseMetadata"]["HTTPStatusCode"]})')
 
+            return security_group_id
+
         except ClientError as e:
             print(e)
-            #pass
+
+            response = self.client.describe_security_groups(
+                Filters=[
+                    {
+                        'Name': 'group-name',
+                        'Values': [name]
+                    },
+                ])
+
+            return response['SecurityGroups'][0]['GroupId']
+
 
 
     def launchInstance(self, name:str, cmd:str, InsType='t2.micro', key='Fontes', secGr='default'):
@@ -126,7 +140,7 @@ class Client:
 
         instance_id = response['Instances'][0]["InstanceId"]
 
-        print(OKCYAN +f'Booting instance {name} ...'+ ENDC)
+        print(c.OKCYAN +f'Booting instance {name} ...'+ c.ENDC)
 
         # Waiter
         waiter = self.client.get_waiter('instance_running')
@@ -137,7 +151,7 @@ class Client:
                     PublicIp=floating_ip,
                 )
 
-        print(OKGREEN+f'Instance {name} ({instance_id}) created with PublicIP: {floating_ip}'+ENDC)
+        print(c.OKGREEN+f'Instance {name} ({instance_id}) created with PublicIP: {floating_ip}'+c.ENDC)
 
         return floating_ip
 
@@ -158,10 +172,10 @@ class Client:
         ])
 
         if response['KeyPairs']:
-            print(WARNING+'Deleting existent Key pair'+ENDC)
+            print(c.WARNING+'Deleting existent Key pair'+c.ENDC)
             response = self.client.delete_key_pair(KeyName=name)
 
-        print(f'Generating '+OKBLUE+'Key pair '+ENDC+f'{name} in file {filename}')
+        print(f'Generating '+c.OKBLUE+'Key pair '+c.ENDC+f'{name} in file {filename}')
         response = self.client.create_key_pair(KeyName=name)
 
         if os.path.exists(filename):
@@ -203,7 +217,7 @@ class Client:
                 instances_ids.append(i['Instances'][0]['InstanceId'])
                 instances_ips.append(i['Instances'][0]['PublicIpAddress'])
 
-            print(HEADER+'Cleaning Up'+ENDC)
+            print(c.HEADER+'Cleaning Up'+c.ENDC)
 
             for ip in instances_ips:   
 
@@ -242,7 +256,7 @@ class Client:
         )
 
         if response['Images']:
-            print(FAIL+'Deregistering'+ENDC+f' existent image named {img_name}') 
+            print(c.FAIL+'Deregistering'+c.ENDC+f' existent image named {img_name}') 
             self.client.deregister_image(
                 ImageId=response['Images'][0]['ImageId'],
             )
@@ -281,4 +295,50 @@ class Client:
 
         return image_id
 
+    def create_lb(self):
 
+        sec_id = self.createSecurityGrp('lb-secgroup', 'oi', [80,8080])
+
+        response = self.loadbalancer.create_load_balancer(
+            LoadBalancerName='myLoadBalancer',
+            Listeners=[
+                {
+                    'Protocol': 'TCP',
+                    'LoadBalancerPort': 80,
+                    'InstancePort': 8080,
+                },
+            ],
+            AvailabilityZones=[
+                'us-east-1a','us-east-1b', 'us-east-1c', 'us-east-1d', 'us-east-1e', 'us-east-1f'
+            ],
+            SecurityGroups=[
+                sec_id,
+            ],
+            Tags=[
+                {
+                    'Key': 'Creator',
+                    'Value': 'PFontes'
+                },
+            ]
+        )
+
+        return response['DNSName']
+
+    def autoscale(self, instance_id):
+
+        try:
+            self.autoscaling.delete_launch_configuration(
+                LaunchConfigurationName='my-auto-scaling-group'
+            )
+        except:
+            pass
+
+        self.autoscaling.create_auto_scaling_group(
+            AutoScalingGroupName='my-auto-scaling-group',
+            LoadBalancerNames=[
+                'myLoadBalancer',
+            ],
+            InstanceId=instance_id,
+            MaxSize=3,
+            MinSize=1,
+        )
