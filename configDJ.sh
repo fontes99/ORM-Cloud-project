@@ -10,7 +10,6 @@ sed -i 's/node1/ipzao/g' tasks/portfolio/settings.py
 
 cd tasks/
 
-sudo sed -i '/python3 manage.py createsuperuser --noinput/d' install.sh
 ./install.sh
 
 sudo reboot
