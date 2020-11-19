@@ -2,8 +2,10 @@ import boto3
 from botocore.exceptions import ClientError
 from botocore.config import Config
 import os
+import time
 import subprocess as sp
 from misc import Color
+
 
 c = Color()
 
@@ -233,8 +235,12 @@ class Client:
 
             for id in instances_ids:
                 print(f'Terminating instance {id}')
+
                 response = self.client.terminate_instances(
                     InstanceIds=[id])
+                
+                waiter = self.client.get_waiter('instance_terminated')
+                waiter.wait(InstanceIds=[id])
 
 
     def create_AIM_and_destroy(self, instance_name:str):
@@ -275,7 +281,8 @@ class Client:
                         'running',
                     ]
                 }
-            ])
+            ]
+        )
 
         
         instance_id = response['Reservations'][0]['Instances'][0]['InstanceId']
@@ -296,6 +303,20 @@ class Client:
         return image_id
 
     def create_lb(self):
+
+        response = self.loadbalancer.describe_load_balancers(
+            LoadBalancerNames=[
+                'myLoadBalancer',
+            ],
+        )
+
+        if response['LoadBalancerDescriptions']:
+            self.loadbalancer.delete_load_balancer(
+                LoadBalancerName='myLoadBalancer'
+            )
+
+            print("Deleting existent loadbalancer 'myLoadBalancer'")
+            time.sleep(120)
 
         sec_id = self.createSecurityGrp('lb-secgroup', 'oi', [80,8080])
 
@@ -322,23 +343,71 @@ class Client:
             ]
         )
 
+        print(c.OKGREEN+f"Loadbalancer {response['DNSName']} created"+c.ENDC)
+
         return response['DNSName']
 
-    def autoscale(self, instance_id):
+    def autoscale(self):
 
-        try:
+        response = self.autoscaling.describe_auto_scaling_groups(
+            AutoScalingGroupNames=[
+                'my-auto-scaling-group',
+            ]
+        )
+
+        if response['AutoScalingGroups']:
+
+            self.autoscaling.delete_auto_scaling_group(
+                AutoScalingGroupName='my-auto-scaling-group',
+                ForceDelete=True
+            )
+
+            print(c.OKCYAN+"Deleting existent autoscaling group 'my-auto-scaling-group'..."+c.ENDC)
+
+            time.sleep(120)
+
+
+        response = self.autoscaling.describe_launch_configurations(
+            LaunchConfigurationNames=[
+                'my-auto-scaling-group',
+            ]
+        )
+
+        if response['LaunchConfigurations']:
+
             self.autoscaling.delete_launch_configuration(
                 LaunchConfigurationName='my-auto-scaling-group'
             )
-        except:
-            pass
+
+
+        response = self.client.describe_instances(
+            Filters=[
+                {
+                    'Name': 'tag:Name',
+                    'Values': [
+                        'Django'
+                    ]
+                },
+                {
+                    'Name': 'instance-state-name',
+                    'Values': [
+                        'running',
+                    ]
+                }
+            ]
+        )
+
+        django_id = response['Reservations'][0]['Instances'][0]['InstanceId']
+
 
         self.autoscaling.create_auto_scaling_group(
             AutoScalingGroupName='my-auto-scaling-group',
             LoadBalancerNames=[
                 'myLoadBalancer',
             ],
-            InstanceId=instance_id,
+            InstanceId=django_id,
             MaxSize=3,
             MinSize=1,
         )
+
+        print(c.OKGREEN+"'my-auto-scaling-group' group created."+c.ENDC)
