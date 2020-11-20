@@ -30,11 +30,11 @@ client.makeKeyPair('DJkey')
 client.createSecurityGrp('django-security', 'enable ssh', [22, 8080, 80])
 DJ_ip = client.launchInstance('Django', open('configDJ.sh').read().replace('ipzao', DB_ip), key='DJkey', secGr='django-security')
 
-#------------ Webserver ---------------
-print(c.HEADER+c.UNDERLINE+'\n-Setting up Webserver-\n'+c.ENDC)
-client.makeKeyPair('Webserver')
-client.createSecurityGrp('webserver-8080', 'enable ssh', [22, 8080, 80])
-Webserver_ip = client.launchInstance('Webserver', open('configApp.sh').read(), key='Webserver', secGr='webserver-8080')
+# #------------ Webserver ---------------
+# print(c.HEADER+c.UNDERLINE+'\n-Setting up Webserver-\n'+c.ENDC)
+# client.makeKeyPair('Webserver')
+# client.createSecurityGrp('webserver-8080', 'enable ssh', [22, 8080, 80])
+# Webserver_ip = client.launchInstance('Webserver', open('configApp.sh').read(), key='Webserver', secGr='webserver-8080')
 
 
 # ====== Loadbalancer + Auto scaling
