@@ -118,27 +118,28 @@ class Client:
         response = self.client.allocate_address()
         floating_ip = response['PublicIp']
 
-        response = self.client.run_instances(ImageId=self.img,
-                                                InstanceType=InsType,
-                                                MinCount=1,
-                                                MaxCount=1,
-                                                KeyName=key,
-                                                SecurityGroups=[secGr],
-                                                UserData=cmd,
-                                                TagSpecifications=[{
-                                                    'ResourceType': 'instance',
-                                                    'Tags': [
-                                                        {
-                                                            'Key'  : 'Name',
-                                                            'Value':  name
-                                                        },
-                                                        {
-                                                            'Key'  : 'Creator',
-                                                            'Value': 'PFontes'
-                                                        }
-                                                    ]
-                                                }]
-                                            )
+        response = self.client.run_instances(
+            ImageId=self.img,
+            InstanceType=InsType,
+            MinCount=1,
+            MaxCount=1,
+            KeyName=key,
+            SecurityGroups=[secGr],
+            UserData=cmd,
+            TagSpecifications=[{
+                'ResourceType': 'instance',
+                'Tags': [
+                    {
+                        'Key'  : 'Name',
+                        'Value':  name
+                    },
+                    {
+                        'Key'  : 'Creator',
+                        'Value': 'PFontes'
+                    }
+                ]
+            }]
+        )
 
         instance_id = response['Instances'][0]["InstanceId"]
 
@@ -149,9 +150,9 @@ class Client:
         waiter.wait(InstanceIds=[instance_id])
 
         response = self.client.associate_address(
-                    InstanceId=instance_id,
-                    PublicIp=floating_ip,
-                )
+            InstanceId=instance_id,
+            PublicIp=floating_ip,
+        )
 
         print(c.OKGREEN+f'Instance {name} ({instance_id}) created with PublicIP: {floating_ip}'+c.ENDC)
 
@@ -237,7 +238,8 @@ class Client:
                 print(f'Terminating instance {id}')
 
                 response = self.client.terminate_instances(
-                    InstanceIds=[id])
+                    InstanceIds=[id]
+                )
                 
                 waiter = self.client.get_waiter('instance_terminated')
                 waiter.wait(InstanceIds=[id])
