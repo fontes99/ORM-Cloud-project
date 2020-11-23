@@ -14,12 +14,6 @@ class Client:
     '''
     Class for utilizing EC2 service of AWS
 
-    TO-DO
-        implementar
-        - criar AIM da DJ e destruir
-        - loadbalancer
-        - autoscaling
-
     '''
 
     def __init__(self, region:str):
