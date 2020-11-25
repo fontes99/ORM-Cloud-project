@@ -1,0 +1,5 @@
+#!/bin/bash
+
+THIS_PATH=$(pwd)
+
+python3 $THIS_PATH/pedro.py $1
