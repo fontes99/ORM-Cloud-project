@@ -1,8 +1,9 @@
 import sys
 import requests 
 import json
-from misc import Color as c
-from client import Client
+
+from src.misc import Color as c
+from src.client import Client
 
 """
 Client for treating Djson endpoints

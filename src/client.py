@@ -4,7 +4,8 @@ from botocore.config import Config
 import os
 import time
 import subprocess as sp
-from misc import Color
+
+from .misc import Color
 
 
 c = Color()
@@ -214,7 +215,7 @@ class Client:
                 instances_ids.append(i['Instances'][0]['InstanceId'])
                 instances_ips.append(i['Instances'][0]['PublicIpAddress'])
 
-            print(c.HEADER+'Cleaning Up'+c.ENDC)
+            print(c.HEADER+f'Cleaning Up [{self.region}]'+c.ENDC)
 
             for ip in instances_ips:   
 
@@ -360,7 +361,7 @@ class Client:
 
             print(c.OKCYAN+"Deleting existent autoscaling group 'my-auto-scaling-group'..."+c.ENDC)
 
-            time.sleep(120)
+            time.sleep(180)
 
 
         response = self.autoscaling.describe_launch_configurations(

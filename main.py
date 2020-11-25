@@ -1,5 +1,5 @@
-from client import Client
-from misc import Color
+from src.client import Client
+from src.misc import Color
 import time
 
 t1 = time.time()
@@ -19,7 +19,7 @@ print(c.HEADER+'\n[us-east-2] '+c.ENDC+'Setting up machines'+c.ENDC)
 print(c.HEADER+c.UNDERLINE+'\n-Setting up Database-\n'+c.ENDC)
 client2.makeKeyPair('postgresDB')
 client2.createSecurityGrp('postgresql', 'postgresql security', [22, 5432])
-DB_ip = client2.launchInstance('postgresDB', open('configDB.sh').read(), key='postgresDB', secGr='postgresql')
+DB_ip = client2.launchInstance('postgresDB', open('config_scripts/configDB.sh').read(), key='postgresDB', secGr='postgresql')
 
 # =========  Make instance in us-east-1 =================
 print(c.HEADER+'\n[us-east-1] '+c.ENDC+'Setting up machines'+c.ENDC)
@@ -27,14 +27,14 @@ print(c.HEADER+'\n[us-east-1] '+c.ENDC+'Setting up machines'+c.ENDC)
 #-------------- Django ----------------
 print(c.HEADER+c.UNDERLINE+'\n-Setting up Django-\n'+c.ENDC)
 client.makeKeyPair('DJkey')
-client.createSecurityGrp('django-security', 'enable ssh', [22, 8080, 80])
-DJ_ip = client.launchInstance('Django', open('configDJ.sh').read().replace('ipzao', DB_ip), key='DJkey', secGr='django-security')
+client.createSecurityGrp('django-security', 'enable ssh, 8080 and 80', [22, 8080, 80])
+DJ_ip = client.launchInstance('Django', open('config_scripts/configDJ.sh').read().replace('ipzao', DB_ip), key='DJkey', secGr='django-security')
 
 # #------------ Webserver ---------------
 # print(c.HEADER+c.UNDERLINE+'\n-Setting up Webserver-\n'+c.ENDC)
 # client.makeKeyPair('Webserver')
 # client.createSecurityGrp('webserver-8080', 'enable ssh', [22, 8080, 80])
-# Webserver_ip = client.launchInstance('Webserver', open('configApp.sh').read(), key='Webserver', secGr='webserver-8080')
+# Webserver_ip = client.launchInstance('Webserver', open('config_scripts/configApp.sh').read(), key='Webserver', secGr='webserver-8080')
 
 
 # ====== Loadbalancer + Auto scaling
