@@ -1,5 +1,5 @@
 # ORM-Cloud-project
-Este projeto consiste em um sistema ORM multi-cloud.
+Este projeto consiste em um sistema de gerenciamento de tarefas ORM multi-cloud.
 
 ## Antes de tudo
 Este projeto mexe com a *Amazon Web Services* (AWS), então, antes de tudo, é necessário configurar suas credenciais AWS. Além disso, é necessário instalar a biblioteca `boto3`.
