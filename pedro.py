@@ -15,29 +15,12 @@ Todo:
 
 client = Client('us-east-1')
 
-response = client.client.describe_instances(
-    Filters=[
-        {
-            'Name': 'tag:Creator',
-            'Values': [
-                'PFontes',
-            ]
-        },
-        {
-            'Name': 'instance-state-name',
-            'Values': [
-                'running',
-            ]
-        },
-        {
-            'Name': 'tag:Name',
-            'Values': [
-                'Django',
-            ]
-        },
-])
+response = client.loadbalancer.describe_load_balancers(
+    LoadBalancerNames=[
+        'myLoadBalancer',
+    ])
 
-ip = response['Reservations'][0]['Instances'][0]['PublicIpAddress']
+dns = response['LoadBalancerDescriptions'][0]['DNSName']
     
 try:
     cmd = sys.argv[1]
@@ -61,7 +44,7 @@ try:
             "description" : description
         }
 
-        r = requests.post(f'http://{ip}:8080/tasks/post', data=payload)
+        r = requests.post(f'http://{dns}/tasks/post', data=payload)
 
         print(c.HEADER+"\nTask created:"+c.ENDC)
         print(f"[ ] {title}")
@@ -72,7 +55,7 @@ try:
 
     elif cmd == 'list':
             
-        r = requests.get(f'http://{ip}:8080/tasks/')
+        r = requests.get(f'http://{dns}/tasks/')
         r = r.json()
 
         print(c.HEADER+c.UNDERLINE+"Tasks:\n"+c.ENDC)
