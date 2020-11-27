@@ -30,6 +30,8 @@ Para rodar o projeto, basta executar o arquivo `install.sh`
 ./install.sh
 ```
 
+Para configurar o cliente `task-list` corretamente, é preciso fornecer a senha do superuser, porque são enviados dois arquivos para `/usr/bin/`
+
 # Client
 
 Depois de instalado. o projeto disponibilizará um client para gerenciar suas tarefas.
