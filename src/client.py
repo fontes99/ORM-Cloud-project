@@ -240,81 +240,25 @@ class Client:
                 waiter.wait(InstanceIds=[id])
 
 
-    def create_AIM_and_destroy(self, instance_name:str):
-        """Creates an AIM of an instance and Terminates it
-        :instance_name: name of instance to create the AIM and terminate
-        """
-
-        img_name = instance_name +'_img'
-
-        response = self.client.describe_images(
-            Filters=[
-                {
-                    'Name': 'name',
-                    'Values': [
-                        img_name,
-                    ]
-                },
-            ]
-        )
-
-        if response['Images']:
-            print(c.FAIL+'Deregistering'+c.ENDC+f' existent image named {img_name}') 
-            self.client.deregister_image(
-                ImageId=response['Images'][0]['ImageId'],
-            )
-
-        response = self.client.describe_instances(
-            Filters=[
-                {
-                    'Name': 'tag:Name',
-                    'Values': [
-                        instance_name
-                    ]
-                },
-                {
-                    'Name': 'instance-state-name',
-                    'Values': [
-                        'running',
-                    ]
-                }
-            ]
-        )
-
-        
-        instance_id = response['Reservations'][0]['Instances'][0]['InstanceId']
-
-        print(f'Creating AIM of instance {instance_name} ({instance_id})')
-        response = self.client.create_image(
-            InstanceId=instance_id,
-            Name=img_name
-        )
-
-        image_id = response['ImageId']
-
-        # print(f'Terminating instance {instance_name} ({instance_id})')           
-        # response = self.client.terminate_instances(
-        #     InstanceIds=[id]
-        # )
-
-        return image_id
-
     def create_lb(self):
 
-        response = self.loadbalancer.describe_load_balancers(
-            LoadBalancerNames=[
-                'myLoadBalancer',
-            ],
-        )
-
-        if response['LoadBalancerDescriptions']:
-            self.loadbalancer.delete_load_balancer(
-                LoadBalancerName='myLoadBalancer'
+        try:
+            response = self.loadbalancer.describe_load_balancers(
+                LoadBalancerNames=[
+                    'myLoadBalancer',
+                ],
             )
 
-            print("Deleting existent loadbalancer 'myLoadBalancer'")
-            time.sleep(120)
+            if response['LoadBalancerDescriptions']:
+                self.loadbalancer.delete_load_balancer(
+                    LoadBalancerName='myLoadBalancer'
+                )
 
+                print("Deleting existent loadbalancer 'myLoadBalancer'")
+                time.sleep(120)
+        except:
+            pass
+        
         sec_id = self.createSecurityGrp('lb-secgroup', 'oi', [80,8080])
 
         response = self.loadbalancer.create_load_balancer(
@@ -403,8 +347,8 @@ class Client:
                 'myLoadBalancer',
             ],
             InstanceId=django_id,
-            MaxSize=3,
-            MinSize=1,
+            MaxSize=5,
+            MinSize=1
         )
 
         print(c.OKGREEN+"'my-auto-scaling-group' group created."+c.ENDC)

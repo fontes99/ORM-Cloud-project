@@ -21,6 +21,7 @@ client2.makeKeyPair('postgresDB')
 client2.createSecurityGrp('postgresql', 'postgresql security', [22, 5432])
 DB_ip = client2.launchInstance('postgresDB', open('config_scripts/configDB.sh').read(), key='postgresDB', secGr='postgresql')
 
+
 # =========  Make instance in us-east-1 =================
 print(c.HEADER+'\n[us-east-1] '+c.ENDC+'Setting up machines'+c.ENDC)
 
@@ -30,14 +31,8 @@ client.makeKeyPair('DJkey')
 client.createSecurityGrp('django-security', 'enable ssh, 8080 and 80', [22, 8080, 80])
 DJ_ip = client.launchInstance('Django', open('config_scripts/configDJ.sh').read().replace('ipzao', DB_ip), key='DJkey', secGr='django-security')
 
-# #------------ Webserver ---------------
-# print(c.HEADER+c.UNDERLINE+'\n-Setting up Webserver-\n'+c.ENDC)
-# client.makeKeyPair('Webserver')
-# client.createSecurityGrp('webserver-8080', 'enable ssh', [22, 8080, 80])
-# Webserver_ip = client.launchInstance('Webserver', open('config_scripts/configApp.sh').read(), key='Webserver', secGr='webserver-8080')
 
-
-# ====== Loadbalancer + Auto scaling
+# ====== Loadbalancer + Auto scaling ===================
 print(c.HEADER+c.UNDERLINE+"\n-Setting up Loadbalancer and Auto scaling-\n"+c.ENDC)
 lb_id = client.create_lb()
 client.autoscale()
